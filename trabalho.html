@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Lista de Tarefas</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px;
+    }
+    h1 {
+      font-size: 3rem;
+      color: #2f2f2f;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    h1 img {
+      width: 60px;
+    }
+    .task-input {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 25px;
+    }
+    .task-input input[type="text"],
+    .task-input input[type="time"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 12px 15px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      outline: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .task-input button {
+      padding: 0 20px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #f67280;
+      color: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: background-color 0.3s;
+    }
+    .task-input button:hover {
+      background-color: #c06c84;
+    }
+    ul#listaTarefas {
+      list-style: disc;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 700px;
+    }
+    ul#listaTarefas li {
+      background: #ffffff;
+      margin-bottom: 15px;
+      padding: 15px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    ul#listaTarefas li:hover {
+      transform: scale(1.01);
+    }
+    ul#listaTarefas li.done {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+    .actions button {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      margin-left: 8px;
+      transition: transform 0.2s;
+    }
+    .actions button img {
+      width: 24px;
+      height: 24px;
+    }
+    .actions button:hover {
+      transform: scale(1.1);
+    }
+    footer {
+      margin-top: auto;
+      padding: 20px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #444;
+    }
+    footer img {
+      width: 90px;
+      margin-top: 10px;
+      opacity: 0.4;
+    }
+  </style>
+</head>
+<body>
+  <h1><img src="https://cdn-icons-png.flaticon.com/512/1486/1486392.png" alt="Icon" /> Lista de Tarefas</h1>
+
+  <div class="task-input">
+    <input type="text" id="novaTarefa" placeholder="Digite sua tarefa..." />
+    <input type="time" id="horarioTarefa" />
+    <button onclick="adicionarTarefa()">Adicionar</button>
+  </div>
+
+  <ul id="listaTarefas"></ul>
+
+  <footer>
+    Organize seu dia com estilo ✨<br />
+    <img src="https://cdn-icons-png.flaticon.com/512/2331/2331966.png" alt="Decorative" />
+  </footer>
+
+  <script>
+    const tarefas = JSON.parse(localStorage.getItem('tarefas')) || [];
+
+    function salvarTarefas() {
+      localStorage.setItem('tarefas', JSON.stringify(tarefas));
+    }
+
+    function renderizarTarefas() {
+      const lista = document.getElementById('listaTarefas');
+      lista.innerHTML = '';
+      tarefas.forEach((tarefa, i) => {
+        const li = document.createElement('li');
+        if (tarefa.concluida) li.classList.add('done');
+        li.innerHTML = `
+          <span>${tarefa.texto} ${tarefa.horario ? `🕒 ${tarefa.horario}` : ''}</span>
+          <div class="actions">
+            <button onclick="concluir(${i})"><img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="Concluir"></button>
+            <button onclick="excluir(${i})"><img src="https://cdn-icons-png.flaticon.com/512/3096/3096673.png" alt="Excluir"></button>
+          </div>
+        `;
+        lista.appendChild(li);
+      });
+    }
+
+    function adicionarTarefa() {
+      const inputTexto = document.getElementById('novaTarefa');
+      const inputHorario = document.getElementById('horarioTarefa');
+      const texto = inputTexto.value.trim();
+      const horario = inputHorario.value;
+      if (!texto) return;
+      tarefas.push({ texto, horario, concluida: false });
+      salvarTarefas();
+      renderizarTarefas();
+      inputTexto.value = '';
+      inputHorario.value = '';
+      agendarNotificacao(texto);
+    }
+
+    function concluir(i) {
+      tarefas[i].concluida = !tarefas[i].concluida;
+      salvarTarefas();
+      renderizarTarefas();
+    }
+
+    function excluir(i) {
+      tarefas.splice(i, 1);
+      salvarTarefas();
+      renderizarTarefas();
+    }
+
+    function agendarNotificacao(texto) {
+      setTimeout(() => {
+        if (Notification.permission === 'granted') {
+          new Notification('Lembrete:', { body: texto });
+        }
+      }, 60000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if ('Notification' in window && Notification.permission !== 'granted') {
+        Notification.requestPermission();
+      }
+      renderizarTarefas();
+    });
+  </script>
+</body>
+</html>
+
+
